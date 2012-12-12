@@ -126,6 +126,8 @@
 
     public function priv_queue($line, $args)
     {
+      if (!$this->ircClass->hasModeSet('#speedrunslive', $line['fromNick'], 'qaohv'))
+        return;
       $to = irc::myStrToLower($line['to']);
       if ($to == '#speedrunslive')
         $command = 'notice';
