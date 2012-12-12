@@ -91,6 +91,37 @@
         $this->ircClass->$command($line['fromNick'], "No games found for {$args['query']}.");
     }
 
+    public function priv_searchabbrev($line, $args)
+    {
+      $to = irc::myStrToLower($line['to']);
+      if ($to == '#speedrunslive')
+        $command = 'notice';
+      elseif ($to == irc::myStrToLower($this->ircClass->getNick()))
+        $command = 'privMsg';
+      else
+        return;
+      if ($args['nargs'] <= 0)
+      {
+        $this->ircClass->$command($line['fromNick'], 'Syntax: .searchabbrev <abbrev>');
+        $this->ircClass->$command($line['fromNick'], 'Searches the games list for the abbreviation <abbrev>.');
+        return;
+      }
+      $rawgames = json_decode(file_get_contents('http://speedrunslive.com:81/games'));
+      $result = '';
+      foreach ($rawgames->games as $game)
+      {
+        if (strtolower($game->abbrev) == strtolower($args['arg1']))
+        {
+          $result = $game->name;
+          break;
+        }
+      }
+      if ($result)
+        $this->ircClass->$command($line['fromNick'], "Game matching abbreviation {$args['arg1']}: $result");
+      else
+        $this->ircClass->$command($line['fromNick'], "No game found for abbreviation {$args['arg1']}.");
+    }
+
     public function priv_races($line, $args)
     {
       $to = irc::myStrToLower($line['to']);
