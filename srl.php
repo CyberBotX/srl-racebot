@@ -220,7 +220,7 @@
             elseif ($limit_to == 'dq' && $state != 'DQ')
               continue;
           }
-          $place = $entrant->place == 9994 ? 0 : ($entrant->place == 9998 ? - 1 : $entrant->place);
+          $place = $entrant->place == 9994 || $entrant->place == 9995 ? 0 : ($entrant->place == 9998 ? - 1 : $entrant->place);
           $time = '';
           if ($place > 0)
           {
@@ -256,7 +256,7 @@
           if (strlen($finalline) + strlen($entrant) > 450)
           {
             $finalline = trim($finalline);
-            $this->ircClass->privMsg($line['to'], $finalline);
+            $this->ircClass->notice($line['to'], $finalline);
             $finalline = '';
           }
           $finalline .= $entrant;
@@ -266,11 +266,55 @@
           $finalline = trim($finalline);
           if ($finalline[strlen($finalline) - 1] == '|')
             $finalline = substr($finalline, 0, -2);
-          $this->ircClass->privMsg($line['to'], $finalline);
+          $this->ircClass->notice($line['to'], $finalline);
         }
       }
       else
-        $this->ircClass->notice($line['fromNick'], 'There are currently no entrants in this race.');
+        $this->ircClass->notice($line['to'], 'There are currently no entrants in this race.');
+    }
+
+    public function priv_time($line, $args)
+    {
+      $to = irc::myStrToLower($line['to']);
+      if (strlen($to) < 5 || substr($to, 0, 5) != '#srl-')
+        return;
+      $id = substr($line['to'], 5);
+      $rawraces = json_decode(file_get_contents('http://speedrunslive.com:81/races'));
+      $results = array();
+      foreach ($rawraces->races as $race)
+      {
+        if ($race->id != $id)
+          continue;
+        if ($race->time)
+        {
+          $secs = $race->time % 60;
+          $mins = $race->time / 60;
+          $hours = $mins / 60;
+          $time = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+          $this->ircClass->notice($line['to'], "Current race time: $time");
+        }
+        else
+          $this->ircClass->notice($line['to'], 'This race has not yet started.');
+      }
+    }
+
+    public function priv_goal($line, $args)
+    {
+      $to = irc::myStrToLower($line['to']);
+      if (strlen($to) < 5 || substr($to, 0, 5) != '#srl-')
+        return;
+      $id = substr($line['to'], 5);
+      $rawraces = json_decode(file_get_contents('http://speedrunslive.com:81/races'));
+      $results = array();
+      foreach ($rawraces->races as $race)
+      {
+        if ($race->id != $id)
+          continue;
+        if ($race->goal)
+          $this->ircClass->notice($line['to'], "Current race goal: {$race->goal}");
+        else
+          $this->ircClass->notice($line['to'], 'This race has no goal set.');
+      }
     }
   }
 ?>
