@@ -248,7 +248,7 @@
           $entrant .= "{$result['name']}";
           if ($result['place'] > 0)
             $entrant .= " ({$result['time']})";
-          if ($result['state'] != 'Finished')
+          if ($result['state'] != 'Finished' && $result['state'] != 'Entered')
             $entrant .= " ({$result['state']})";
           if ($result['message'])
             $entrant .= " ({$result['message']})";
