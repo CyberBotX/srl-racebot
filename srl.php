@@ -79,6 +79,10 @@
           }
         }
       }
+      usort($results, function ($a, $b)
+      {
+        return strcasecmp($a['name'], $b['name']);
+      });
       if ($results)
       {
         $this->ircClass->$command($line['fromNick'], "Results of search for {$args['query']}:");
@@ -138,6 +142,16 @@
         $state = $race->statetext;
         if ($state == 'Complete' || $state == 'Race Over')
           continue;
+        elseif ($state == 'In Progress')
+        {
+          $time = time() - $race->time;
+          $secs = $time % 60;
+          $mins = $time / 60;
+          $hours = $mins / 60;
+          $mins %= 60;
+          $time = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+          $state ="$state ($time)";
+        }
         $races[] = array('name' => $race->game->name, 'goal' => $race->goal, 'id' => $race->id, 'entrants' => $race->numentrants, 'state' => $state);
       }
       if ($races)
@@ -167,12 +181,19 @@
       else
         return;
       $rawraces = json_decode(file_get_contents('http://speedrunslive.com:81/races'));
-      $results = array();
+      $races = array();
       foreach ($rawraces->races as $race)
       {
         $state = $race->statetext;
         if ($state != 'Complete' && $state != 'Race Over')
           continue;
+        $time = time() - $race->time;
+        $secs = $time % 60;
+        $mins = $time / 60;
+        $hours = $mins / 60;
+        $mins %= 60;
+        $time = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+        $state ="$state ($time)";
         $races[] = array('name' => $race->game->name, 'goal' => $race->goal, 'id' => $race->id, 'entrants' => $race->numentrants, 'state' => $state);
       }
       if ($races)
@@ -258,6 +279,7 @@
             $secs = $entrant->time % 60;
             $mins = $entrant->time / 60;
             $hours = $mins / 60;
+            $mins %= 60;
             $time = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
           }
           $results[] = array('name' => $entrant->displayname, 'place' => $place, 'time' => $time, 'message' => $entrant->message, 'state' => $state);
@@ -321,6 +343,7 @@
           $secs = $race->time % 60;
           $mins = $race->time / 60;
           $hours = $mins / 60;
+          $mins %= 60;
           $time = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
           $this->ircClass->notice($line['to'], "Current race time: $time");
         }
